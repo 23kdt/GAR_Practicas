@@ -3,8 +3,8 @@ Repositorio para las prácticas de GAR
 
 - Diego Dorado Galán 
 
--Carlos Rodríguez Gómez-Carreño
+- Carlos Rodríguez Gómez-Carreño
 
--Felipe Segovia Friginal
+- Felipe Segovia Friginal
 
--Andrés Castellanos Cantos
+- Andrés Castellanos Cantos
