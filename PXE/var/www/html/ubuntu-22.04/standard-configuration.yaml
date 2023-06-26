@@ -1,0 +1,124 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  identity:
+    hostname: pxe-test.djm.me
+    realname: nodo1
+    username: nodo1
+    password: $6$eMKpPA05XXI.Q0mM$sjyi3P9RmYqnQI4eGcAfEjlqmk2A6x3o/UzlwTjO.cmSfGSRYV5focuMfxlOcgYpmVn1QkxVsSahiB/AWDo/S/
+
+  keyboard:
+    layout: es
+
+  locale: es_ES.UTF-8
+
+  network:
+    version: 2
+    ethernets:
+      enp0s3:
+        dhcp4: true
+    
+
+  refresh-installer:
+    update: true
+
+  source:
+    id: ubuntu-server
+    search_drivers: false
+
+  ssh:
+    authorized-keys: []
+    install-server: true
+   
+  apt:
+    preserve_sources_list: false
+    mirror-selection:
+        primary:
+            - country-mirror
+            - arches: [i386, amd64]
+              uri: "http://archive.ubuntu.com/ubuntu"
+            - arches: [s390x, arm64, armhf, powerpc, ppc64el, riscv64]
+              uri: "http://ports.ubuntu.com/ubuntu-ports"
+    fallback: abort
+    geoip: true
+
+  storage:
+    config:
+
+      # disk-0
+      - id: disk-0
+        type: disk
+        ptable: gpt
+        wipe: superblock
+
+      # disk-0 > partition-0 = /boot/efi
+      - id: partition-0
+        type: partition
+        device: disk-0
+        size: 1G
+        wipe: superblock
+        flag: boot
+        grub_device: true
+
+      - id: format-0
+        type: format
+        volume: partition-0
+        fstype: fat32
+
+      - id: mount-0
+        type: mount
+        device: format-0
+        path: /boot/efi
+
+      # disk-0 > partition-1 = /boot
+      - id: partition-1
+        type: partition
+        device: disk-0
+        size: 2G
+        wipe: superblock
+
+      - id: format-1
+        type: format
+        volume: partition-1
+        fstype: ext4
+
+      - id: mount-1
+        type: mount
+        device: format-1
+        path: /boot
+
+      # disk-0 > partition-2
+      - id: partition-2
+        type: partition
+        device: disk-0
+        size: -1
+        wipe: superblock
+
+      # disk-0 > partition-2 > ubuntu-vg
+      - id: lvm_volgroup-0
+        type: lvm_volgroup
+        name: ubuntu-vg
+        devices:
+          - partition-2
+
+      # disk-0 > partition-2 > ubuntu-vg > ubuntu-lv = /
+      - id: lvm_partition-0
+        type: lvm_partition
+        volgroup: lvm_volgroup-0
+        name: ubuntu-lv
+        wipe: superblock
+
+      - id: format-3
+        type: format
+        volume: lvm_partition-0
+        fstype: ext4
+
+      - id: mount-3
+        type: mount
+        device: format-3
+        path: /
+
+  timezone: Europe/Madrid
+
+  updates: security

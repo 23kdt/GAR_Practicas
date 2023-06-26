@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+RESET=$'\e[0m'
+BOLD=$'\e[1m'
+LCYAN=$'\e[96m'
+
+echo "${LCYAN}${BOLD}Installing dependencies...${RESET}"
+sudo apt install -y \
+    isc-dhcp-server \
+    tftpd-hpa apache2 \
+    whois
+
+echo
+echo "${LCYAN}${BOLD}Creating directories...${RESET}"
+sudo mkdir -pv /srv/tftp/efi
+sudo mkdir -pv /srv/tftp/grub/fonts
+sudo mkdir -pv /srv/tftp/ubuntu-22.04
+sudo mkdir -pv /var/www/html/ubuntu-22.04
+
+echo
+echo "${LCYAN}${BOLD}Copying files from the repo...${RESET}"
+sudo cp -fv "$PWD/etc/dhcp/dhcpd.conf" /etc/dhcp/dhcpd.conf
+sudo cp -fv "$PWD/srv/tftp/grub/grub.cfg" /srv/tftp/grub/grub.cfg
+sudo cp -fv "$PWD/var/www/html/ubuntu-22.04/standard-configuration.yaml" /var/www/html/ubuntu-22.04/standard-configuration.yaml
+
+echo
+echo "${LCYAN}${BOLD}Copying GRUB...${RESET}"
+sudo cp -fv /usr/lib/shim/shimx64.efi.signed /srv/tftp/efi/shimx64.efi
+sudo cp -fv /usr/lib/grub/x86_64-efi-signed/grubnetx64.efi.signed /srv/tftp/efi/grubx64.efi
+sudo cp -fv /usr/lib/grub/x86_64-efi-signed/grubnetx64.efi.signed /srv/tftp/efi/grubx64.efi
+sudo cp -fv /usr/share/grub/unicode.pf2 /srv/tftp/grub/fonts/unicode.pf2
+
+echo
+echo "${LCYAN}${BOLD}Downloading ISO...${RESET}"
+sudo wget -nc https://releases.ubuntu.com/22.04.2/ubuntu-22.04.2-live-server-amd64.iso -O /var/www/html/ubuntu-22.04/ubuntu-22.04.2-live-server-amd64.iso || true
+
+echo
+echo "${LCYAN}${BOLD}Extracting Linux kernel...${RESET}"
+sudo mkdir -pv /mnt/iso
+sudo mount -rv /var/www/html/ubuntu-22.04/ubuntu-22.04.2-live-server-amd64.iso /mnt/iso
+sudo mkdir -pv /srv/tftp/ubuntu-22.04
+sudo cp -v /mnt/iso/casper/vmlinuz /srv/tftp/ubuntu-22.04/
+sudo cp -v /mnt/iso/casper/initrd /srv/tftp/ubuntu-22.04/
+sudo umount -v /mnt/iso
+sudo rmdir -v /mnt/iso
+
+echo
+echo "${LCYAN}${BOLD}Reloading services...${RESET}"
+sudo systemctl reload-or-restart apache2 isc-dhcp-server tftpd-hpa
