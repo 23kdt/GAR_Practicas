@@ -1,0 +1,61 @@
+- name: Añadir host al inventario
+  hosts: localhost
+  gather_facts: false
+  vars:
+    inventory_file: "inventario"
+  tasks:
+    - name: Leer archivo de nodos
+      set_fact:
+        nodos: "{{ lookup('file', 'nodos.yaml') | from_yaml }}"
+        wantlist: True
+      no_log: true
+
+    - name: Añadir host al inventario
+      add_host:
+        name: "{{ item.ip_address }}"
+        ansible_host: "{{ item.ip_address }}"
+        mac_address: "{{ item.mac_address }}"
+        node_role: "{{ item.node_role }}"
+      delegate_to: localhost
+      loop: "{{ nodos }}"
+
+    - name: Validar si existe el grupo en el archivo de inventario
+      shell: grep -q "\[{{ item.node_role }}\]" {{ inventory_file }}
+      ignore_errors: true
+      changed_when: false
+      failed_when: false
+      register: group_exist
+      loop: "{{ nodos }}"
+
+    - name: Establecer group_exist en caso de que grep falle
+      set_fact:
+        group_exist: "{{ {'rc': 1} if group_exist is failed else group_exist }}"
+      loop: "{{ nodos }}"
+
+    - name: Añadir entrada de host al archivo de inventario si no existe el grupo
+      lineinfile:
+        path: "{{ inventory_file }}"
+        line: "\n[{{item.node_role}}]\n{{ item.ip_address }} ansible_mac_address={{ item.mac_address }}"
+        insertafter: EOF
+      when: item in group_exist.results | selectattr('rc','eq', 1) | map(attribute='item') | list
+      delegate_to: localhost
+      loop: "{{ nodos }}"
+
+    - name: Añadir entrada de host al archivo de inventario si existe el grupo
+      lineinfile:
+        path: "{{ inventory_file }}"
+        line: "{{ item.ip_address }} ansible_mac_address={{ item.mac_address }}"
+        insertafter: "\\[{{ item.node_role }}\\]"
+        state: present
+      when: item in group_exist.results | selectattr('rc','eq', 0) | map(attribute='item') | list
+      delegate_to: localhost
+      loop: "{{ nodos }}"
+
+
+- name: SSH
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Asociar claves SSH
+      script: sh_ssh_nodos.sh
+      delegate_to: localhost  
