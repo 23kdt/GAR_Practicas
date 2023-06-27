@@ -1,7 +1,3 @@
-En primer lugar, he tenido que crear algunos playbooks para crear el inventario, o para modificarlo, bien de forma individual o pasandole un archivo "nodos.yaml" que añade los nodos al host_group en función de su atributo "node_role", teniendo en cuenta que un host puede pertenecer a distintos host_groups y que un host no puede estar dos veces en un host_group. 
-
-Este código, toma como referencia el archivo "nodos.yaml" y convierte el inventario en las entradas que tiene dicho archivo.
-
 ## Añadir nodos al inventario
 Si queremos añadir nodos, pero sin eliminar el contenido del inventario (ya que eliminaría el resto de hosts asociados), puede ser de utilidad el siguiente código. Hay que tener en cuenta que un host puede pertenecer a distintos host_groups, por lo que tanto la IP y la MAC pueden estar repetidas en varios host_groups, pero no puede haber dos host iguales en un mismo host_group, ya que estaría duplicado. 
 
