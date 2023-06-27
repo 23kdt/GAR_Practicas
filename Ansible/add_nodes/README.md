@@ -9,13 +9,13 @@ Crearemos un script en bash para copiar las claves ssh en todos los hosts remoto
 #!/bin/bash
 
 # Variables
-ssh_key_file="/home/kdt23/.ssh/ansible.pub"
+ssh_key_file="claves/nodo0.pub"
 inventory_file="inventario"
 
 # Iterar sobre las direcciones IP del archivo inventario
 grep -Eo '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' $inventory_file | while read ip_address; do
   # Ejecutar ssh-copy-id
-  output=$(sshpass -f /home/kdt23/.password.txt ssh-copy-id -i $ssh_key_file $ip_address 2>&1) # Redireccionar stderr a stdout
+  output=$(sshpass -f password.txt ssh-copy-id -i $ssh_key_file $ip_address 2>&1) # Redireccionar stderr a stdout
   if echo "$output" | grep -q "WARNING: All keys were skipped"; then
     echo "La clave ya existe en $ip_address, se omite"
   else
@@ -24,12 +24,13 @@ grep -Eo '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' $inventory_file | while read ip_addres
 done
 
 
+
 ```
 
 Brevemente, explico este código:
 
 Almacenamos como variables las rutas al archivo dónde almacenamos las claves ssh y la ruta dónde almacenamos el inventario con todos los hosts asociados.
-A continuación, mediante el comando grep, iteramos sobre todas las líneas del inventario y sobre cada IP realizamos el comando ``sshpass -f /home/kdt23/.password.txt ssh-copy-id -i $ssh_key_file $ip_address``. Este comando lo que hace es pasar la clave ssh a los nodos remotos (mediante ssh-copy-id) y mediante ``sshpass -f`` lo que indicamos será las claves de dichos nodos remotos, para evitar que nos pregunte por ellas y automatizar el proceso. Además, redirigimos la señal a la salida estándar con el fin de capturar excepciones (en caso de que el host remoto ya tenga la clave púbica en su carpeta **authorized_keys**).  
+A continuación, mediante el comando grep, iteramos sobre todas las líneas del inventario y sobre cada IP realizamos el comando ``sshpass -f password.txt ssh-copy-id -i $ssh_key_file $ip_address ``. Este comando lo que hace es pasar la clave ssh a los nodos remotos (mediante ssh-copy-id) y mediante ``sshpass -f`` lo que indicamos será las claves de dichos nodos remotos, para evitar que nos pregunte por ellas y automatizar el proceso. Además, redirigimos la señal a la salida estándar con el fin de capturar excepciones (en caso de que el host remoto ya tenga la clave púbica en su carpeta **authorized_keys**).  
 
 Este fichero deberá ejecutarse desde el nodo de control para que se aplique sobre el resto de nodos. Para ello, podemos hacer uso del parámetro **script** o **command** en las tareas de los playbook. 
 Para ello, hemos creado otro play dentro del playbook anterior de añadir nodos:
@@ -102,45 +103,6 @@ Para ello, hemos creado otro play dentro del playbook anterior de añadir nodos:
       delegate_to: localhost
 
 
-
-- name: Añadir nuevos nodos al host_group nuevos
-  hosts: localhost
-  gather_facts: false
-  vars:
-    inventory_file: "inventario"
-  tasks:
-    - name: Leer archivo de nodos
-      set_fact:
-        nodos: "{{ lookup('file', 'nodos.yaml') | from_yaml }}"
-        wantlist: True
-      no_log: true
-
-    - name: Añadir host al inventario
-      add_host:
-        name: "{{ item.ip_address }}"
-        ansible_host: "{{ item.ip_address }}"
-        mac_address: "{{ item.mac_address }}"
-        node_role: "{{ item.node_role }}"
-      delegate_to: localhost
-      loop: "{{ nodos }}"
-   
-    - name: Crear host_group nuevos
-      lineinfile:
-        path: "{{ inventory_file }}"
-        line: "\n[nuevos]\n"
-        insertafter: EOF
-      delegate_to: localhost
-
-
-    - name: Añadir nodos al host_group nuevos
-      lineinfile:
-        path: "{{ inventory_file }}"
-        line: "{{ item.ip_address }} ansible_mac_address={{ item.mac_address }} node_role={{ item.node_role }}"
-        insertafter: "[nuevos]"
-        state: present
-      delegate_to: localhost
-      loop: "{{ nodos }}"
-
 ```
 
 
@@ -166,4 +128,4 @@ La tarea "SSH":
       delegate_to: localhost
 ```
 
-Se encarga de ejecutar el script mostrado anteriormente. 
+Se encarga de ejecutar el script mostrado anteriormente. Con esto, nos aseguramos que todos los nodos con los que tenemos que trabajar tengan la clave SSH asociada para que el nodo0 pueda trabajar sobre estos. 
