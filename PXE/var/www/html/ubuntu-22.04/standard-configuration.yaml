@@ -4,8 +4,8 @@ autoinstall:
 
   identity:
     hostname: pxe-test.djm.me
-    realname: nodo1
-    username: nodo1
+    realname: ubuntu
+    username: ubuntu
     password: $6$eMKpPA05XXI.Q0mM$sjyi3P9RmYqnQI4eGcAfEjlqmk2A6x3o/UzlwTjO.cmSfGSRYV5focuMfxlOcgYpmVn1QkxVsSahiB/AWDo/S/
 
   keyboard:
@@ -18,10 +18,15 @@ autoinstall:
     ethernets:
       enp0s3:
         dhcp4: true
-    
+        dhcp6: false
+        dhcp-identifier: mac
+      enp0s8:
+        dhcp4: true
+        dhcp6: false
+        dhcp-identifier: mac 
 
   refresh-installer:
-    update: true
+    update: false
 
   source:
     id: ubuntu-server
@@ -118,6 +123,7 @@ autoinstall:
         type: mount
         device: format-3
         path: /
+   
 
   timezone: Europe/Madrid
 
