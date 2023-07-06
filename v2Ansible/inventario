@@ -1,0 +1,16 @@
+[frontal]
+frontal ansible_host=192.168.1.150 ansible_mac_address=08:00:27:Bf:6c:cb
+
+[http]
+http1 ansible_host=192.168.1.160 ansible_mac_address=08:00:27:62:ef:04
+
+http2 ansible_host=192.168.1.170 ansible_mac_address=08:00:27:cd:7d:ac
+
+[worker]
+worker1 ansible_host=192.168.2.150 ansible_mac_address=08:00:27:97:34:f1
+
+[master]
+master ansible_host=192.168.2.160 ansible_mac_address=08:00:27:b5:9c:96
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3

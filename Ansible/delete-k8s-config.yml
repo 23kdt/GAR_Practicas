@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: yes
+
+  vars:
+    packages:
+      - docker.io
+      - kubeadm
+      - kubectl
+      - kubelet
+
+  tasks:
+    - name: Unhold kubeadm, kubectl and kubelet packages
+      dpkg_selections:
+        name: "{{ item }}"
+        selection: install
+      loop:
+        - kubeadm
+        - kubectl
+        - kubelet
+
+    - name: Uninstalling kubernetes related packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+      loop: "{{ packages }}"
+
+    - name: Removing required files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/kubernetes/
+        - /var/lib/etcd/
+        - "{{ ansible_env.HOME }}/.kube/"
+

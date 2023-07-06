@@ -1,6 +1,0 @@
-- ip_address: 192.168.1.134
-  mac_address: 00:0c:29:94:b7:28
-  node_role: webserver
-- ip_address: 192.168.1.106
-  mac_address: 00:0c:29:50:68:45
-  node_role: db

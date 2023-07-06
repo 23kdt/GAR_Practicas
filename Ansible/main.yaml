@@ -1,0 +1,56 @@
+#- hosts: master
+#  roles:
+#  - master
+#- hosts: worker
+#  roles: 
+#  - worker
+
+- name: Deploy MariaDB on Kubernetes
+  hosts: master
+  tasks:
+    - name: Ensure pip is installed (Debian/Ubuntu)
+      become: yes
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install openshift Python library
+      become: yes
+      pip:
+        name: openshift
+
+    - name: Copy MariaDB Operator manifest to master node
+      become: yes
+      copy:
+        src: mariadb/mariadb-operator.yaml
+        dest: mariadb-operator.yaml
+
+    - name: Copy MariaDB instance manifest to master node
+      become: yes
+      copy:
+        src: mariadb/db.yml
+        dest: db.yml
+
+    - name: Copy MariaDB service manifest to master node
+      become: yes
+      copy:
+        src: mariadb/nodeport.yml
+        dest: nodeport.yml
+
+    - name: Create MariaDB Operator
+      become: yes
+      community.kubernetes.k8s:
+        kubeconfig: /home/kdt23/.kube/config
+        src: /home/kdt23/GAR_Practicas/GAR_Practicas/Ansible/mariadb/mariadb-operator.yaml
+
+    - name: Create MariaDB instance
+      become: yes
+      community.kubernetes.k8s:
+        kubeconfig: /home/kdt23/.kube/config
+        src: /home/kdt23/GAR_Practicas/GAR_Practicas/Ansible/mariadb/db.yml
+ 
+    - name: Expose MariaDB service
+      become: yes
+      community.kubernetes.k8s:
+        kubeconfig: /home/kdt23/.kube/config
+        src: /home/kdt23/GAR_Practicas/GAR_Practicas/Ansible/mariadb/nodeport.yml

@@ -1,0 +1,9 @@
+
+[worker]
+worker1 ansible_host=192.168.1.23 ansible_mac_address=00:0c:29:94:b7:28
+
+[master]
+master ansible_host=192.168.1.157 ansible_mac_address=00:0c:29:50:68:45
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3

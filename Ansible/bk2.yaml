@@ -1,0 +1,28 @@
+- hosts: master
+  become: yes
+  tasks:
+
+    - name: Copiar script al nodo master
+      copy:
+        src: install_k8s.sh
+        dest: install_k8s.sh
+        mode: 0744
+
+    - name: Ejecutar script en nodo master
+      shell: ./install_k8s.sh -m
+      register: join_command_raw
+
+    - name: set join command
+      become: yes
+      set_fact:
+        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+
+
+- hosts: worker
+  become: yes
+  tasks:
+
+    - name: join cluster
+      become: yes                                            
+      become_method: sudo 
+      shell: "{{ hostvars['master'].join_command }} "
