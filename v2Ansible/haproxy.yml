@@ -10,5 +10,5 @@
 
     - name: Copiar archivo de configuracion HaProxy
       copy:
-        src: /v2Ansible/haproxy/haproxy.cfg
+        src: /haproxy/haproxy.cfg
         dest: /etc/haproxy/haproxy.cfg

@@ -28,7 +28,7 @@
 
     - name: Copiar archivo MediaWiki
       copy:
-        src: /v2Ansible/mediawiki/mediawiki-1.40.0.tar
+        src: /mediawiki/mediawiki-1.40.0.tar
         dest: /var/www/html/mediawiki-1.40.0.tar
 
     - name: Extraer archivo MediaWiki
