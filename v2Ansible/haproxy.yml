@@ -1,0 +1,14 @@
+- name: Instalar HaProxy
+  hosts: balanceador
+  become: true
+
+  tasks:
+    - name: Instalar Haproxy
+      apt:
+        name: haproxy
+        state: present
+
+    - name: Copiar archivo de configuracion HaProxy
+      copy:
+        src: /v2Ansible/haproxy/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg

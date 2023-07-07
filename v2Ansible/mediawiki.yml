@@ -1,0 +1,37 @@
+- name: Instalar Apache2 y PHP
+  hosts: http
+  become: true
+
+  tasks:
+    - name: Instalar Apache2
+      apt:
+        name: apache2
+        state: present
+
+    - name: Instalar PHP y módulos
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - php
+        - libapache2-mod-php
+        - php-mysql
+        - php-curl
+        - php-gd
+        - php-xml
+        - php-mbstring
+        - php-xmlrpc
+        - php-zip
+        - php-soap
+        - php-intl
+
+
+    - name: Copiar archivo MediaWiki
+      copy:
+        src: /v2Ansible/mediawiki/mediawiki-1.40.0.tar
+        dest: /var/www/html/mediawiki-1.40.0.tar
+
+    - name: Extraer archivo MediaWiki
+      command: tar xvf /var/www/html/mediawiki-1.40.0.tar
+      args:
+        chdir: /var/www/html/
