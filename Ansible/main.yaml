@@ -1,56 +1,119 @@
-#- hosts: master
-#  roles:
-#  - master
-#- hosts: worker
-#  roles: 
-#  - worker
+- name: Instalar HaProxy
+  hosts: balanceador
+  become: true
 
-- name: Deploy MariaDB on Kubernetes
-  hosts: master
   tasks:
-    - name: Ensure pip is installed (Debian/Ubuntu)
-      become: yes
+    - name: Instalar Haproxy
       apt:
-        name: python3-pip
+        name: haproxy
         state: present
 
-    - name: Install openshift Python library
-      become: yes
-      pip:
-        name: openshift
-
-    - name: Copy MariaDB Operator manifest to master node
-      become: yes
+    - name: Copiar archivo de configuracion HaProxy
       copy:
-        src: mariadb/mariadb-operator.yaml
-        dest: mariadb-operator.yaml
+        src: ./haproxy/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+    
+    - name: Reiniciar servicio HAProxy
+      systemd:
+        name: haproxy
+        state: restarted
 
-    - name: Copy MariaDB instance manifest to master node
-      become: yes
+    - name: Permitir tráfico saliente
+      command: iptables -P OUTPUT ACCEPT
+      ignore_errors: true
+
+    - name: Permitir tráfico de reenvío
+      command: iptables -P FORWARD ACCEPT
+      ignore_errors: true
+      
+    - name: Permitir tráfico entrante por el puerto SSH proveniente del nodo0
+      command: iptables -A INPUT -s 192.168.1.140 -p tcp --dport 22 -j ACCEPT
+      ignore_errors: true
+
+    - name: Aceptar tráfico entrante a los puertos 443 y 80
+      command: iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+      ignore_errors: true
+
+      command: iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+      ignore_errors: true
+      
+    - name: Permitir el tráfico entrante relacionado y establecido
+      command: sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+      ignore_errors: true
+      
+    - name: Denegar tráfico entrante
+      command: iptables -P INPUT ACCEPT
+      ignore_errors: true
+
+- name: Instalar Apache2 y PHP
+  hosts: http
+  become: true
+
+  tasks:
+    - name: Instalar Apache2
+      apt:
+        name: apache2
+        state: present
+
+    - name: Instalar PHP y módulos
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - php
+        - libapache2-mod-php
+        - php-mysql
+        - php-curl
+        - php-gd
+        - php-xml
+        - php-mbstring
+        - php-xmlrpc
+        - php-zip
+        - php-soap
+        - php-intl
+
+
+    - name: Copiar archivo MediaWiki
       copy:
-        src: mariadb/db.yml
-        dest: db.yml
+        src: ./mediawiki/mediawiki-1.40.0.tar.gz
+        dest: /var/www/html/mediawiki-1.40.0.tar
 
-    - name: Copy MariaDB service manifest to master node
-      become: yes
-      copy:
-        src: mariadb/nodeport.yml
-        dest: nodeport.yml
+    - name: Extraer archivo MediaWiki
+      command: tar xvf /var/www/html/mediawiki-1.40.0.tar
+      args:
+        chdir: /var/www/html/
+        
+    - name: Permitir tráfico saliente pero no de reenvío ni de entrada
+      command: iptables -P OUTPUT ACCEPT
+      ignore_errors: true
 
-    - name: Create MariaDB Operator
-      become: yes
-      community.kubernetes.k8s:
-        kubeconfig: /home/kdt23/.kube/config
-        src: /home/kdt23/GAR_Practicas/GAR_Practicas/Ansible/mariadb/mariadb-operator.yaml
+    - name: Denegar tráfico de reenvío
+      command: iptables -P FORWARD DROP
+      ignore_errors: true
 
-    - name: Create MariaDB instance
-      become: yes
-      community.kubernetes.k8s:
-        kubeconfig: /home/kdt23/.kube/config
-        src: /home/kdt23/GAR_Practicas/GAR_Practicas/Ansible/mariadb/db.yml
- 
-    - name: Expose MariaDB service
-      become: yes
-      community.kubernetes.k8s:
-        kubeconfig: /home/kdt23/.kube/config
-        src: /home/kdt23/GAR_Practicas/GAR_Practicas/Ansible/mariadb/nodeport.yml
+    - name: Permitir tráfico entrante por el puerto SSH proveniente del nodo0
+      command: iptables -A INPUT -s 192.168.1.140 -p tcp --dport 22 -j ACCEPT
+      ignore_errors: true
+
+    - name: Aceptar tráfico entrante al puerto 443 desde el balanceador
+      command: iptables -A INPUT -p tcp -s 192.168.1.150 --dport 443 -j ACCEPT
+      ignore_errors: true
+
+    - name: Aceptar tráfico entrante al puerto 80 desde el balanceador
+      command: iptables -A INPUT -p tcp -s 192.168.1.150 --dport 80 -j ACCEPT
+      ignore_errors: true
+
+    - name: Permitir tráfico entrante relacionado y establecido
+      command: iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+      ignore_errors: true
+
+    - name: Denegar tráfico entrante
+      command: iptables -P INPUT DROP
+      ignore_errors: true
+
+- hosts: master
+  roles:
+  - master
+- hosts: worker
+  roles: 
+  - worker

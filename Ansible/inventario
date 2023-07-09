@@ -1,9 +1,13 @@
 
-[worker]
-worker1 ansible_host=192.168.1.23 ansible_mac_address=00:0c:29:94:b7:28
+[balanceador]
+ubuntu@192.168.1.150
+
+[http]
+ubuntu@192.168.1.160
+ubuntu@192.168.1.170
 
 [master]
-master ansible_host=192.168.1.157 ansible_mac_address=00:0c:29:50:68:45
+ubuntu@192.168.2.150
 
-[all:vars]
-ansible_python_interpreter=/usr/bin/python3
+[worker]
+ubuntu@192.168.2.160

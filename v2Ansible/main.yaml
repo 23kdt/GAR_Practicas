@@ -1,7 +1,0 @@
----
-- hosts: master
-  roles:
-  - master
-- hosts: worker
-  roles: 
-  - worker
