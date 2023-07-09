@@ -30,7 +30,7 @@ autoinstall:
 
   ssh:
     allow-pw: true
-    authorized-keys: []
+    authorized-keys: [ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP67Q8PurVNGTS9nc287Z/HK5w7jgaDXj1BBWLmkvUR0 nodo0@nodo0-VirtualBox]
     install-server: true
    
   apt:
@@ -121,4 +121,7 @@ autoinstall:
         device: format-3
         path: /
    
+
   timezone: Europe/Madrid
+
+  updates: security
